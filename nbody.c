@@ -75,7 +75,7 @@ void dump(int iter, int nParticles, struct ParticleType* particle)
 }
 
 // Initialize random number generator and particles:
-void init_rand(const int nParticles, const struct ParticuleType* particle){
+void init_rand(int nParticules, struct ParticuleType* const particule){
   srand48(0x2020);
   for (int i = 0; i < nParticles; i++)
   {
@@ -88,7 +88,7 @@ void init_rand(const int nParticles, const struct ParticuleType* particle){
   }
 }
 // Initialize (no random generator) particles
-void init_norand(const int nParticles, const struct ParticuleType* particle){
+void init_norand(int nParticules, struct ParticuleType* const particule){
   for (int i = 0; i < nParticles; i++)
   {
     particle[i].x =  0.1*i;//2.0*drand48() - 1.0;
