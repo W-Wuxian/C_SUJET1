@@ -74,6 +74,32 @@ void dump(int iter, int nParticles, struct ParticleType* particle)
     fclose(f);
 }
 
+// Initialize random number generator and particles:
+void init_rand(const int nParticles, const struct ParticuleType* particle){
+  srand48(0x2020);
+  for (int i = 0; i < nParticles; i++)
+  {
+    particle[i].x =  2.0*drand48() - 1.0;
+    particle[i].y =  2.0*drand48() - 1.0;
+    particle[i].z =  2.0*drand48() - 1.0;
+    particle[i].vx = 2.0*drand48() - 1.0;
+    particle[i].vy = 2.0*drand48() - 1.0;
+    particle[i].vz = 2.0*drand48() - 1.0;
+  }
+}
+// Initialize (no random generator) particles
+void init_norand(const int nParticles, const struct ParticuleType* particle){
+  for (int i = 0; i < nParticles; i++)
+  {
+    particle[i].x =  0.1*i;//2.0*drand48() - 1.0;
+    particle[i].y =  0.2*i;//2.0*drand48() - 1.0;
+    particle[i].z =  0.3*i;//2.0*drand48() - 1.0;
+    particle[i].vx = 0.4*i;//2.0*drand48() - 1.0;
+    particle[i].vy = 0.5*i;//2.0*drand48() - 1.0;
+    particle[i].vz = 0.6*i;//2.0*drand48() - 1.0;
+  }
+}
+
 int main(const int argc, const char** argv)
 {
 
@@ -87,18 +113,11 @@ int main(const int argc, const char** argv)
   struct ParticleType* particle = malloc(nParticles*sizeof(struct ParticleType));
 
   // Initialize random number generator and particles
-  srand48(0x2020);
+  //init_rand(nParticules, particule);
+  // Initialize (no random generator) particles
+  init_norand(nParticules, particule);
 
-  int i;
-  for (i = 0; i < nParticles; i++)
-  {
-    particle[i].x =  0.1*i;//2.0*drand48() - 1.0;
-    particle[i].y =  0.2*i;//2.0*drand48() - 1.0;
-    particle[i].z =  0.3*i;//2.0*drand48() - 1.0;
-    particle[i].vx = 0.4*i;//2.0*drand48() - 1.0;
-    particle[i].vy = 0.5*i;//2.0*drand48() - 1.0;
-    particle[i].vz = 0.6*i;//2.0*drand48() - 1.0;
-  }
+  
   
   // Perform benchmark
   printf("\nPropagating %d particles using 1 thread...\n\n", 
