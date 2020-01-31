@@ -10,10 +10,13 @@
 #define THREADS_PER_BLOCK 128
 #define DUMP
 
+//-------------------------------------------------------------------------------------------------------------------------
+
 struct ParticleType{
   float x, y, z, vx, vy, vz;
 };
 
+//-------------------------------------------------------------------------------------------------------------------------
 
 //CUDA VERSION:
 __global__ void MoveParticles_CUDA(const int nParticles, struct ParticleType* const particle){
@@ -46,6 +49,40 @@ __global__ void MoveParticles_CUDA(const int nParticles, struct ParticleType* co
       }
 }//fct MoveParticles_CUDA
 
+//-------------------------------------------------------------------------------------------------------------------------
+
+// Initialize random number generator and particles:
+void init_rand(int nParticles, struct ParticleType* particle){
+  srand48(0x2020);
+  for (int i = 0; i < nParticles; i++)
+  {
+    particle[i].x =  2.0*drand48() - 1.0;
+    particle[i].y =  2.0*drand48() - 1.0;
+    particle[i].z =  2.0*drand48() - 1.0;
+    particle[i].vx = 2.0*drand48() - 1.0;
+    particle[i].vy = 2.0*drand48() - 1.0;
+    particle[i].vz = 2.0*drand48() - 1.0;
+  }
+}
+
+//-------------------------------------------------------------------------------------------------------------------------
+
+// Initialize (no random generator) particles
+void init_norand(int nParticles, struct ParticleType* particle){
+  const float a=127.0/nParticles;
+  for (int i = 0; i < nParticles; i++)
+  {
+    particle[i].x =  i*a;//2.0*drand48() - 1.0;
+    particle[i].y =  i*a;//2.0*drand48() - 1.0;
+    particle[i].z =  1.0;//2.0*drand48() - 1.0;
+    particle[i].vx = 0.5;//2.0*drand48() - 1.0;
+    particle[i].vy = 0.5;//2.0*drand48() - 1.0;
+    particle[i].vz = 0.5;//2.0*drand48() - 1.0;
+  }
+}
+
+//-------------------------------------------------------------------------------------------------------------------------
+
 void dump(int iter, int nParticles, struct ParticleType* particle)
 {
     char filename[64];
@@ -64,7 +101,7 @@ void dump(int iter, int nParticles, struct ParticleType* particle)
     fclose(f);
 }
     
-
+//-------------------------------------------------------------------------------------------------------------------------
 
 int main(const int argc, const char** argv)
 {
@@ -74,23 +111,21 @@ int main(const int argc, const char** argv)
   const int nSteps = (argc > 2)?atoi(argv[2]):10;
   // Particle propagation time step
   const float ddt = 0.0005f;
+//-------------------------------------------------------------------------------------------------------------------------
   //DEFINE SIZE:
   int SIZE = nParticles * sizeof(struct ParticleType);
+//-------------------------------------------------------------------------------------------------------------------------
   //DECLARATION & ALLOC particle ON HOST:
   struct ParticleType* particle = (struct ParticleType*) malloc(SIZE);
+//-------------------------------------------------------------------------------------------------------------------------
   // Initialize random number generator and particles
   srand48(0x2020);
-
-  int i;
-  for (i = 0; i < nParticles; i++)
-  {
-     particle[i].x =  0.1*i;//2.0*drand48() - 1.0;
-     particle[i].y =  0.2*i;//2.0*drand48() - 1.0;
-     particle[i].z =  0.3*i;//2.0*drand48() - 1.0;
-     particle[i].vx = 0.4*i;//2.0*drand48() - 1.0;
-     particle[i].vy = 0.5*i;//2.0*drand48() - 1.0;
-     particle[i].vz = 0.6*i;//2.0*drand48() - 1.0;
-  }
+  // Initialize random number generator and particles
+  //init_rand(nParticles, particle);
+  // Initialize (no random generator) particles
+  init_norand(nParticles, particle);
+//-------------------------------------------------------------------------------------------------------------------------
+  
 
   // Perform benchmark
   printf("\nPropagating %d particles using 1 thread...\n\n", 
@@ -100,10 +135,14 @@ int main(const int argc, const char** argv)
   double rate = 0, dRate = 0; // Benchmarking data
   const int skipSteps = 3; // Skip first iteration (warm-up)
   printf("\033[1m%5s %10s %10s %8s\033[0m\n", "Step", "Time, s", "Interact/s", "GFLOP/s"); fflush(stdout);
+//-------------------------------------------------------------------------------------------------------------------------
   cudaProfilerStart();
+//-------------------------------------------------------------------------------------------------------------------------
   struct ParticleType *particle_cuda;
   cudaMalloc((void **)&particle_cuda, SIZE);
-  cudaMemcpy(particle_cuda, particle, SIZE, cudaMemcpyHostToDevice);
+//-------------------------------------------------------------------------------------------------------------------------
+  cudaMemcpy(particle_cuda, particle, SIZE, cudaMemcpyHostToDevice)
+//-------------------------------------------------------------------------------------------------------------------------
   for (int step = 1; step <= nSteps; step++) {
 
     const double tStart = omp_get_wtime(); // Start timing
@@ -138,7 +177,9 @@ int main(const int argc, const char** argv)
 #endif
   }
   cudaFree(particle_cuda);
+//-------------------------------------------------------------------------------------------------------------------------
   cudaProfilerStop();
+//-------------------------------------------------------------------------------------------------------------------------
   rate/=(double)(nSteps-skipSteps); 
   dRate=sqrt(dRate/(double)(nSteps-skipSteps)-rate*rate);
   printf("-----------------------------------------------------\n");
