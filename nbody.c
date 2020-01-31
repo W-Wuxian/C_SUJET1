@@ -89,14 +89,15 @@ void init_rand(int nParticles, struct ParticleType* particle){
 }
 // Initialize (no random generator) particles
 void init_norand(int nParticles, struct ParticleType* particle){
+  const float a=127.0/nParticles;
   for (int i = 0; i < nParticles; i++)
   {
-    particle[i].x =  0.1*i;//2.0*drand48() - 1.0;
-    particle[i].y =  0.2*i;//2.0*drand48() - 1.0;
-    particle[i].z =  0.3*i;//2.0*drand48() - 1.0;
-    particle[i].vx = 0.4*i;//2.0*drand48() - 1.0;
-    particle[i].vy = 0.5*i;//2.0*drand48() - 1.0;
-    particle[i].vz = 0.6*i;//2.0*drand48() - 1.0;
+    particle[i].x =  i*a;//2.0*drand48() - 1.0;
+    particle[i].y =  i*a;//2.0*drand48() - 1.0;
+    particle[i].z =  1.0;//2.0*drand48() - 1.0;
+    particle[i].vx = 0.5;//2.0*drand48() - 1.0;
+    particle[i].vy = 0.5;//2.0*drand48() - 1.0;
+    particle[i].vz = 0.5;//2.0*drand48() - 1.0;
   }
 }
 
@@ -113,9 +114,9 @@ int main(const int argc, const char** argv)
   struct ParticleType* particle = malloc(nParticles*sizeof(struct ParticleType));
 
   // Initialize random number generator and particles
-  init_rand(nParticles, particle);
+  //init_rand(nParticles, particle);
   // Initialize (no random generator) particles
-  //init_norand(nParticles, particle);
+  init_norand(nParticles, particle);
 
   
   
