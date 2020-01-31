@@ -13,12 +13,10 @@ struct ParticleType {
 void MoveParticles(const int nParticles, struct ParticleType* const particle, const float dt) {
 
   // Loop over particles that experience force
-  #pragma acc parallel loop
+  #pragma acc parallel loop collapse(2) 
   for (int i = 0; i < nParticles; i++) {
-
     // Components of the gravity force on particle i
-    float Fx = 0, Fy = 0, Fz = 0; 
-      
+    float Fx = 0, Fy = 0, Fz = 0;      
     // Loop over particles that exert force
     for (int j = 0; j < nParticles; j++) { 
       // No self interaction
