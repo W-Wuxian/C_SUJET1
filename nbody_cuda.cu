@@ -141,7 +141,7 @@ int main(const int argc, const char** argv)
   struct ParticleType *particle_cuda;
   cudaMalloc((void **)&particle_cuda, SIZE);
 //-------------------------------------------------------------------------------------------------------------------------
-  cudaMemcpy(particle_cuda, particle, SIZE, cudaMemcpyHostToDevice)
+  cudaMemcpy(particle_cuda, particle, SIZE, cudaMemcpyHostToDevice);
 //-------------------------------------------------------------------------------------------------------------------------
   for (int step = 1; step <= nSteps; step++) {
 
