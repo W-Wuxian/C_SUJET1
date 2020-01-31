@@ -3,7 +3,7 @@
 #include <stdlib.h> // drand48
 #include <omp.h>
 
-//#define DUMP
+#define DUMP
 
 struct ParticleType { 
   float x, y, z;
@@ -13,11 +13,12 @@ struct ParticleType {
 void MoveParticles(const int nParticles, struct ParticleType* const particle, const float dt) {
 
   // Loop over particles that experience force
-  #pragma acc parallel loop collapse(2) 
+  // #pragma acc parallel loop data copy(particle[0:nParticles-1])   
   for (int i = 0; i < nParticles; i++) {
     // Components of the gravity force on particle i
     float Fx = 0, Fy = 0, Fz = 0;      
     // Loop over particles that exert force
+    //#pragma acc parallel loop
     for (int j = 0; j < nParticles; j++) { 
       // No self interaction
       if (i != j) {
@@ -127,6 +128,7 @@ int main(const int argc, const char** argv)
   double rate = 0, dRate = 0; // Benchmarking data
   const int skipSteps = 3; // Skip first iteration (warm-up)
   printf("\033[1m%5s %10s %10s %8s\033[0m\n", "Step", "Time, s", "Interact/s", "GFLOP/s"); fflush(stdout);
+  #pragma acc data copy(particle[0:nParticles-1])
   for (int step = 1; step <= nSteps; step++) {
 
     const double tStart = omp_get_wtime(); // Start timing
