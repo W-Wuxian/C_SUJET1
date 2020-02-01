@@ -13,4 +13,4 @@ openacc: openacc.c
 
 
 clean:
-	rm -f nbody cuda openacc *.txt *~ *.out
+	rm -f nbody cuda openacc oprof *.txt *~ *.out

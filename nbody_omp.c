@@ -11,16 +11,18 @@ struct ParticleType {
 };
 
 void MoveParticles(const int nParticles, struct ParticleType* const particle, const float dt) {
- 
+  int i,j;  
+  float Fx,Fy,Fz;
   // Loop over particles that experience force
-  //#pragma acc parallel loop 
-  for (int i = 0; i < nParticles; i++) {
+  #pragma omp parallel for private(j)
+  for (i = 0; i < nParticles; i++) { 
     // Components of the gravity force on particle i
-    float Fx = 0, Fy = 0, Fz = 0;      
-    // Loop over particles that exert force  
-    for (int j = 0; j < nParticles; j++) { 
+    Fx = 0, Fy = 0, Fz = 0; 
+    // Loop over particles that exert force
+    
+    for (j = 0; j < nParticles; j++) { 
       // No self interaction
-      if (i != j) {
+      //if (i != j) {
           // Avoid singularity and interaction with self
           const float softening = 1e-20;
 
@@ -35,7 +37,7 @@ void MoveParticles(const int nParticles, struct ParticleType* const particle, co
           Fx += dx / drPower32;  
           Fy += dy / drPower32;  
           Fz += dz / drPower32;
-      }
+	  //}
 
     }
 
@@ -47,6 +49,7 @@ void MoveParticles(const int nParticles, struct ParticleType* const particle, co
 
   // Move particles according to their velocities
   // O(N) work, so using a serial loop
+  #pragma omp parallel for
   for (int i = 0 ; i < nParticles; i++) { 
     particle[i].x  += particle[i].vx*dt;
     particle[i].y  += particle[i].vy*dt;
@@ -73,10 +76,10 @@ void dump(int iter, int nParticles, struct ParticleType* particle)
     fclose(f);
 }
 
-
 // Initialize random number generator and particles:
 void init_rand(int nParticles, struct ParticleType* particle){
   srand48(0x2020);
+  #pragma omp parallel for 
   for (int i = 0; i < nParticles; i++)
   {
     particle[i].x =  2.0*drand48() - 1.0;
@@ -90,6 +93,7 @@ void init_rand(int nParticles, struct ParticleType* particle){
 // Initialize (no random generator) particles
 void init_norand(int nParticles, struct ParticleType* particle){
   const float a=127.0/nParticles;
+  #pragma omp parallel for
   for (int i = 0; i < nParticles; i++)
   {
     particle[i].x =  i*a;//2.0*drand48() - 1.0;
@@ -100,7 +104,6 @@ void init_norand(int nParticles, struct ParticleType* particle){
     particle[i].vz = 0.5;//2.0*drand48() - 1.0;
   }
 }
-
 
 int main(const int argc, const char** argv)
 {
@@ -114,12 +117,13 @@ int main(const int argc, const char** argv)
 
   struct ParticleType* particle = malloc(nParticles*sizeof(struct ParticleType));
 
-
   // Initialize random number generator and particles
   //init_rand(nParticles, particle);
   // Initialize (no random generator) particles
   init_norand(nParticles, particle);
- 
+
+  
+  
   // Perform benchmark
   printf("\nPropagating %d particles using 1 thread...\n\n", 
 	 nParticles
@@ -127,9 +131,6 @@ int main(const int argc, const char** argv)
   double rate = 0, dRate = 0; // Benchmarking data
   const int skipSteps = 3; // Skip first iteration (warm-up)
   printf("\033[1m%5s %10s %10s %8s\033[0m\n", "Step", "Time, s", "Interact/s", "GFLOP/s"); fflush(stdout);
-
-  
-#pragma acc data copy(particle[0,nParticles-1])
   for (int step = 1; step <= nSteps; step++) {
 
     const double tStart = omp_get_wtime(); // Start timing
@@ -160,6 +161,7 @@ int main(const int argc, const char** argv)
   printf("-----------------------------------------------------\n");
   printf("* - warm-up, not included in average\n\n");
   free(particle);
+  return 0;
 }
 
 
