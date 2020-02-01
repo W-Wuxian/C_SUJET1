@@ -11,16 +11,17 @@ struct ParticleType {
 };
 
 void MoveParticles(const int nParticles, struct ParticleType* const particle, const float dt) {
- 
+  int i,j;
+  float Fx,Fy,Fz;
   // Loop over particles that experience force
-  //#pragma acc parallel loop 
-  for (int i = 0; i < nParticles; i++) {
+#pragma parallel loop//acc kernels async(2) wait(1)   
+  for (i = 0; i < nParticles; i++) {
     // Components of the gravity force on particle i
-    float Fx = 0, Fy = 0, Fz = 0;      
-    // Loop over particles that exert force  
-    for (int j = 0; j < nParticles; j++) { 
+    Fx = 0, Fy = 0, Fz = 0;      
+    // Loop over particles that exert force
+    //#pragma acc parallel loop independent reduction(+:Fx,Fy,Fz)
+    for (j = 0; j < nParticles; j++) {
       // No self interaction
-      if (i != j) {
           // Avoid singularity and interaction with self
           const float softening = 1e-20;
 
@@ -35,8 +36,6 @@ void MoveParticles(const int nParticles, struct ParticleType* const particle, co
           Fx += dx / drPower32;  
           Fy += dy / drPower32;  
           Fz += dz / drPower32;
-      }
-
     }
 
     // Accelerate particles in response to the gravitational force
@@ -129,11 +128,13 @@ int main(const int argc, const char** argv)
   printf("\033[1m%5s %10s %10s %8s\033[0m\n", "Step", "Time, s", "Interact/s", "GFLOP/s"); fflush(stdout);
 
   
-#pragma acc data copy(particle[0,nParticles-1])
+#pragma acc data copyin(particle[0:nParticles],dt)
   for (int step = 1; step <= nSteps; step++) {
 
     const double tStart = omp_get_wtime(); // Start timing
+#pragma acc update host(particle[0:nParticles])    
     MoveParticles(nParticles, particle, dt);
+#pragma acc update device(particle[0:nParticles])
     const double tEnd = omp_get_wtime(); // End timing
 
     const float HztoInts   = ((float)nParticles)*((float)(nParticles-1)) ;
@@ -161,5 +162,4 @@ int main(const int argc, const char** argv)
   printf("* - warm-up, not included in average\n\n");
   free(particle);
 }
-
 
